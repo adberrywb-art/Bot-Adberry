@@ -249,6 +249,32 @@
             border-color: #00d4ff;
             background: rgba(0, 212, 255, 0.05);
         }
+
+        .changelog-item {
+            position: relative;
+            padding-left: 24px;
+        }
+
+        .changelog-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 8px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #00d4ff;
+        }
+
+        .changelog-item:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            left: 3px;
+            top: 20px;
+            width: 2px;
+            height: calc(100% - 12px);
+            background: linear-gradient(to bottom, #00d4ff, transparent);
+        }
     </style>
 </head>
 <body class="text-white font-sans antialiased">
@@ -542,7 +568,7 @@
         </div>
     </section>
 
-    <!-- Comparison Section (Reemplaza Results) -->
+    <!-- Comparison Section -->
     <section id="comparison" class="py-20 lg:py-32 bg-trading-card/20">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center max-w-3xl mx-auto mb-16">
@@ -616,12 +642,12 @@
 
                 <div class="comparison-row grid grid-cols-4 gap-4 p-6 border-b border-trading-border/20 items-center transition-colors">
                     <div class="flex items-center gap-2">
-                        <i data-lucide="code" class="w-4 h-4 text-trading-accent"></i>
-                        <span class="text-sm">Código Fuente</span>
+                        <i data-lucide="zap" class="w-4 h-4 text-trading-accent"></i>
+                        <span class="text-sm">Velocidad de Ejecución</span>
                     </div>
-                    <div class="text-center"><i data-lucide="x" class="w-5 h-5 x-icon mx-auto"></i></div>
-                    <div class="text-center"><i data-lucide="check" class="w-5 h-5 check-icon mx-auto"></i> <span class="text-xs text-trading-muted">(Plan Enterprise)</span></div>
-                    <div class="text-center text-xs text-trading-success">Transparencia</div>
+                    <div class="text-center text-trading-muted">~500ms</div>
+                    <div class="text-center text-trading-success font-mono font-bold">~50ms</div>
+                    <div class="text-center text-xs text-trading-success">10x más rápido</div>
                 </div>
 
                 <div class="comparison-row grid grid-cols-4 gap-4 p-6 border-b border-trading-border/20 items-center transition-colors">
@@ -756,11 +782,11 @@
                         </li>
                         <li class="flex items-center gap-3 text-sm">
                             <i data-lucide="check" class="w-5 h-5 text-trading-success"></i>
-                            <span>Código fuente incluido</span>
+                            <span>Backtesting ilimitado</span>
                         </li>
                         <li class="flex items-center gap-3 text-sm">
                             <i data-lucide="check" class="w-5 h-5 text-trading-success"></i>
-                            <span>Personalización completa</span>
+                            <span>Personalización avanzada</span>
                         </li>
                     </ul>
                     <button onclick="openContactModal('enterprise')" class="w-full py-3 rounded-xl border border-trading-border hover:border-trading-accent/50 transition-colors font-semibold">
@@ -834,7 +860,7 @@
                         <i data-lucide="chevron-down" class="w-5 h-5 text-trading-muted transition-transform"></i>
                     </button>
                     <div class="px-6 pb-4 text-trading-muted text-sm hidden">
-                        Ofrecemos garantía de 15 días. Si el bot no genera resultados positivos en ese período, te devolvemos el 100% de tu inversión sin preguntas. <button onclick="openLegalModal('terms')" class="text-trading-accent hover:underline">Ver términos completos</button>.
+                        Ofrecemos garantía de 15 días. Si el bot no genera resultados positivos en ese período, te devolvemos el 100% de tu inversión sin preguntas. <button onclick="openLegalModal('refund')" class="text-trading-accent hover:underline">Ver términos completos</button>.
                     </div>
                 </div>
             </div>
@@ -938,7 +964,7 @@
         </div>
     </footer>
 
-    <!-- DEMO MODAL - Funcional -->
+    <!-- DEMO MODAL -->
     <div id="demoModal" class="modal">
         <div class="modal-content">
             <div class="p-6 border-b border-trading-border/30 flex justify-between items-center">
@@ -951,12 +977,10 @@
                 </button>
             </div>
             <div class="p-6">
-                <!-- Opción 1: Video de YouTube (Reemplaza VIDEO_ID con tu video) -->
                 <div class="video-container mb-6" id="videoContainer" style="display: none;">
                     <iframe id="demoVideo" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                 </div>
                 
-                <!-- Opción 2: Placeholder cuando no hay video configurado -->
                 <div class="demo-placeholder mb-6" id="demoPlaceholder" onclick="requestDemoAccess()">
                     <div class="w-20 h-20 rounded-full bg-trading-accent/20 flex items-center justify-center mb-4">
                         <i data-lucide="play" class="w-10 h-10 text-trading-accent"></i>
@@ -1000,6 +1024,203 @@
                         Solicitar por WhatsApp
                     </a>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHANGELOG MODAL - NUEVO DISEÑO -->
+    <div id="changelogModal" class="modal">
+        <div class="modal-content max-w-2xl">
+            <div class="p-6 border-b border-trading-border/30 flex justify-between items-center">
+                <h3 class="text-xl font-bold flex items-center gap-2">
+                    <i data-lucide="git-commit" class="w-6 h-6 text-trading-accent"></i>
+                    Historial de Versiones
+                </h3>
+                <button onclick="closeChangelogModal()" class="w-8 h-8 rounded-lg hover:bg-trading-card flex items-center justify-center transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-6 max-h-[60vh] overflow-y-auto">
+                <!-- Versión Actual -->
+                <div class="mb-8">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="px-3 py-1 rounded-full bg-trading-accent text-black text-sm font-bold">v2.1</span>
+                        <span class="text-trading-muted text-sm">Marzo 2026</span>
+                        <span class="px-2 py-0.5 rounded bg-trading-success/20 text-trading-success text-xs">Actual</span>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="changelog-item">
+                            <p class="text-sm text-trading-muted">Nuevo sistema de drawdown mejorado que registra máximas pérdidas flotantes</p>
+                        </div>
+                        <div class="changelog-item">
+                            <p class="text-sm text-trading-muted">Panel ampliado con 6 estadísticas en formato grid 3x2</p>
+                        </div>
+                        <div class="changelog-item">
+                            <p class="text-sm text-trading-muted">Filtro de noticias integrado con Forex Factory (alertas 40min antes)</p>
+                        </div>
+                        <div class="changelog-item">
+                            <p class="text-sm text-trading-muted">Meta diaria configurable con detención automática al alcanzar objetivo</p>
+                        </div>
+                        <div class="changelog-item">
+                            <p class="text-sm text-trading-muted">Soporte multi-cuenta (hasta 5 cuentas en plan Enterprise)</p>
+                        </div>
+                        <div class="changelog-item">
+                            <p class="text-sm text-trading-muted">Interfaz completamente rediseñada con estilo moderno tipo terminal</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Versión Anterior -->
+                <div class="mb-8 opacity-60">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="px-3 py-1 rounded-full bg-trading-border text-trading-muted text-sm font-bold">v2.0</span>
+                        <span class="text-trading-muted text-sm">Enero 2026</span>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="changelog-item">
+                            <p class="text-sm text-trading-muted">Lanzamiento oficial del sistema de protección de capital</p>
+                        </div>
+                        <div class="changelog-item">
+                            <p class="text-sm text-trading-muted">Implementación de algoritmo EMA dual para señales de entrada</p>
+                        </div>
+                        <div class="changelog-item">
+                            <p class="text-sm text-trading-muted">Sistema de licencias por número de cuenta MT5</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Próxima Versión -->
+                <div>
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="px-3 py-1 rounded-full bg-trading-warning/20 text-trading-warning text-sm font-bold">v2.2</span>
+                        <span class="text-trading-muted text-sm">Próximamente</span>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="changelog-item">
+                            <p class="text-sm text-trading-muted flex items-center gap-2">
+                                <i data-lucide="clock" class="w-4 h-4 text-trading-warning"></i>
+                                Trading en múltiples pares (EURUSD, GBPUSD, XAUUSD simultáneos)
+                            </p>
+                        </div>
+                        <div class="changelog-item">
+                            <p class="text-sm text-trading-muted flex items-center gap-2">
+                                <i data-lucide="clock" class="w-4 h-4 text-trading-warning"></i>
+                                Dashboard web para monitoreo remoto desde cualquier dispositivo
+                            </p>
+                        </div>
+                        <div class="changelog-item">
+                            <p class="text-sm text-trading-muted flex items-center gap-2">
+                                <i data-lucide="clock" class="w-4 h-4 text-trading-warning"></i>
+                                App móvil nativa para iOS y Android
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAYMENT METHODS MODAL - NUEVO DISEÑO -->
+    <div id="paymentMethodsModal" class="modal">
+        <div class="modal-content max-w-lg">
+            <div class="p-6 border-b border-trading-border/30 flex justify-between items-center">
+                <h3 class="text-xl font-bold flex items-center gap-2">
+                    <i data-lucide="credit-card" class="w-6 h-6 text-trading-accent"></i>
+                    Métodos de Pago Aceptados
+                </h3>
+                <button onclick="closePaymentMethodsModal()" class="w-8 h-8 rounded-lg hover:bg-trading-card flex items-center justify-center transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <!-- PayPal -->
+                <div class="glass-card rounded-xl p-4 border border-trading-border/30 hover:border-[#0070ba]/50 transition-colors group">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-[#0070ba]/10 flex items-center justify-center flex-shrink-0 group-hover:bg-[#0070ba]/20 transition-colors">
+                            <i data-lucide="credit-card" class="w-6 h-6 text-[#0070ba]"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between mb-1">
+                                <h4 class="font-semibold">PayPal</h4>
+                                <span class="text-xs text-trading-muted">Instantáneo</span>
+                            </div>
+                            <p class="text-sm text-trading-muted mb-2">Pago seguro con protección al comprador. Acepta tarjetas de crédito/débito sin necesidad de cuenta PayPal.</p>
+                            <div class="flex gap-2">
+                                <span class="px-2 py-1 rounded bg-trading-dark text-xs text-trading-muted">Visa</span>
+                                <span class="px-2 py-1 rounded bg-trading-dark text-xs text-trading-muted">Mastercard</span>
+                                <span class="px-2 py-1 rounded bg-trading-dark text-xs text-trading-muted">Amex</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Crypto -->
+                <div class="glass-card rounded-xl p-4 border border-trading-border/30 hover:border-[#f7931a]/50 transition-colors group">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-[#f7931a]/10 flex items-center justify-center flex-shrink-0 group-hover:bg-[#f7931a]/20 transition-colors">
+                            <i data-lucide="bitcoin" class="w-6 h-6 text-[#f7931a]"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between mb-1">
+                                <h4 class="font-semibold">Criptomonedas</h4>
+                                <span class="px-2 py-0.5 rounded bg-trading-success/20 text-trading-success text-xs font-medium">5% OFF</span>
+                            </div>
+                            <p class="text-sm text-trading-muted mb-2">Descuento especial por pago en crypto. Redes soportadas: ERC20, TRC20, BEP20.</p>
+                            <div class="flex gap-2">
+                                <span class="px-2 py-1 rounded bg-trading-dark text-xs text-trading-muted">BTC</span>
+                                <span class="px-2 py-1 rounded bg-trading-dark text-xs text-trading-muted">ETH</span>
+                                <span class="px-2 py-1 rounded bg-trading-dark text-xs text-trading-muted">USDT</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transferencia -->
+                <div class="glass-card rounded-xl p-4 border border-trading-border/30 hover:border-trading-success/50 transition-colors group">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-trading-success/10 flex items-center justify-center flex-shrink-0 group-hover:bg-trading-success/20 transition-colors">
+                            <i data-lucide="landmark" class="w-6 h-6 text-trading-success"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between mb-1">
+                                <h4 class="font-semibold">Transferencia Bancaria</h4>
+                                <span class="text-xs text-trading-muted">1-2 días</span>
+                            </div>
+                            <p class="text-sm text-trading-muted mb-2">Transferencia directa a cuentas bancarias en múltiples países. Ideal para montos grandes.</p>
+                            <div class="flex gap-2">
+                                <span class="px-2 py-1 rounded bg-trading-dark text-xs text-trading-muted">USA (Chase)</span>
+                                <span class="px-2 py-1 rounded bg-trading-dark text-xs text-trading-muted">EUR (IBAN)</span>
+                                <span class="px-2 py-1 rounded bg-trading-dark text-xs text-trading-muted">MXN (BBVA)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wise -->
+                <div class="glass-card rounded-xl p-4 border border-trading-border/30 hover:border-[#9fe870]/50 transition-colors group">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-[#9fe870]/10 flex items-center justify-center flex-shrink-0 group-hover:bg-[#9fe870]/20 transition-colors">
+                            <i data-lucide="globe" class="w-6 h-6 text-[#9fe870]"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between mb-1">
+                                <h4 class="font-semibold">Wise (TransferWise)</h4>
+                                <span class="text-xs text-trading-muted">Instantáneo</span>
+                            </div>
+                            <p class="text-sm text-trading-muted mb-2">Transferencia internacional con comisión baja (0.5%). Ideal para Europa, UK y Asia.</p>
+                            <div class="flex gap-2">
+                                <span class="px-2 py-1 rounded bg-trading-dark text-xs text-trading-muted">GBP</span>
+                                <span class="px-2 py-1 rounded bg-trading-dark text-xs text-trading-muted">EUR</span>
+                                <span class="px-2 py-1 rounded bg-trading-dark text-xs text-trading-muted">+50 países</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="p-6 border-t border-trading-border/30 bg-trading-dark/30">
+                <p class="text-sm text-trading-muted text-center">
+                    ¿Necesitas otro método de pago? <a href="https://wa.me/1234567890" target="_blank" class="text-trading-accent hover:underline">Contáctanos</a>
+                </p>
             </div>
         </div>
     </div>
@@ -1208,9 +1429,7 @@
             document.getElementById('demoModal').classList.add('active');
             document.body.style.overflow = 'hidden';
             
-            // Aquí puedes configurar tu video de YouTube
-            // Reemplaza 'VIDEO_ID' con el ID de tu video
-            const youtubeVideoId = ''; // Ejemplo: 'dQw4w9WgXcQ'
+            const youtubeVideoId = '';
             
             if (youtubeVideoId) {
                 document.getElementById('videoContainer').style.display = 'block';
@@ -1222,14 +1441,36 @@
         function closeDemoModal() {
             document.getElementById('demoModal').classList.remove('active');
             document.body.style.overflow = '';
-            // Detener video
             document.getElementById('demoVideo').src = '';
         }
 
         function requestDemoAccess() {
-            // Abrir WhatsApp con mensaje predefinido
             const message = encodeURIComponent('Hola, vi su landing page y quiero agendar una demo personalizada de Adberry Pro. ¿Cuándo tienen disponibilidad?');
             window.open(`https://wa.me/1234567890?text=${message}`, '_blank');
+        }
+
+        // CHANGELOG MODAL - NUEVO
+        function openChangelogModal() {
+            document.getElementById('changelogModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+            lucide.createIcons();
+        }
+
+        function closeChangelogModal() {
+            document.getElementById('changelogModal').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // PAYMENT METHODS MODAL - NUEVO
+        function openPaymentMethodsModal() {
+            document.getElementById('paymentMethodsModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+            lucide.createIcons();
+        }
+
+        function closePaymentMethodsModal() {
+            document.getElementById('paymentMethodsModal').classList.remove('active');
+            document.body.style.overflow = '';
         }
 
         // LEGAL MODALS
@@ -1254,7 +1495,7 @@
                         <p>Las actualizaciones son gratuitas durante el período de licencia activa. Las actualizaciones mayores (versiones x.0) pueden requerir pago adicional según discreción del desarrollador.</p>
                         
                         <h4 class="text-white font-semibold text-lg">6. Terminación</h4>
-                        <p>La licencia puede ser terminada por incumplimiento de estos términos, intento de reverse engineering, o distribución no autorizada del software.</p>
+                        <p>La licencia puede ser terminada por incumplimiento de estos términos, intento de descompilación, o distribución no autorizada del software.</p>
                     </div>
                 `
             },
@@ -1323,7 +1564,7 @@
                         <ul class="list-disc pl-5 space-y-2">
                             <li>Solicitud dentro de los 15 días calendario</li>
                             <li>La licencia no ha sido revendida o transferida</li>
-                            <li>No se ha intentado descompilar o modificar el código</li>
+                            <li>No se ha intentado descompilar o modificar el software</li>
                             <li>Se proporciona feedback constructivo sobre el motivo (opcional pero apreciado)</li>
                         </ul>
                         
@@ -1446,47 +1687,6 @@
         }
 
         // OTHER MODALS
-        function openPaymentMethodsModal() {
-            const content = `
-                <div class="space-y-4">
-                    <div class="glass-card rounded-xl p-4 border border-trading-border/30">
-                        <div class="flex items-center gap-3 mb-2">
-                            <i data-lucide="credit-card" class="w-5 h-5 text-[#0070ba]"></i>
-                            <span class="font-semibold">PayPal</span>
-                        </div>
-                        <p class="text-sm text-trading-muted">Pago seguro con protección al comprador. Acepta tarjetas de crédito/débito sin cuenta PayPal.</p>
-                    </div>
-                    <div class="glass-card rounded-xl p-4 border border-trading-border/30">
-                        <div class="flex items-center gap-3 mb-2">
-                            <i data-lucide="bitcoin" class="w-5 h-5 text-[#f7931a]"></i>
-                            <span class="font-semibold">Criptomonedas</span>
-                        </div>
-                        <p class="text-sm text-trading-muted">BTC, ETH, USDT (ERC20/TRC20), BNB. Descuento del 5% por pago en crypto.</p>
-                    </div>
-                    <div class="glass-card rounded-xl p-4 border border-trading-border/30">
-                        <div class="flex items-center gap-3 mb-2">
-                            <i data-lucide="landmark" class="w-5 h-5 text-trading-success"></i>
-                            <span class="font-semibold">Transferencia Bancaria</span>
-                        </div>
-                        <p class="text-sm text-trading-muted">Cuentas en USA (Chase), Europa (IBAN), México (BBVA), Colombia (Bancolombia).</p>
-                    </div>
-                    <div class="glass-card rounded-xl p-4 border border-trading-border/30">
-                        <div class="flex items-center gap-3 mb-2">
-                            <i data-lucide="globe" class="w-5 h-5 text-[#9fe870]"></i>
-                            <span class="font-semibold">Wise (TransferWise)</span>
-                        </div>
-                        <p class="text-sm text-trading-muted">Transferencia internacional con comisión baja. Ideal para Europa y Asia.</p>
-                    </div>
-                </div>
-            `;
-            
-            alert('Métodos de pago detallados:\n\n💳 PayPal (Tarjetas)\n₿ Cripto: BTC, ETH, USDT (5% descuento)\n🏦 Transferencia: USA, EUR, MXN, COL\n🌍 Wise: Internacional bajo costo\n\nContacta por WhatsApp para recibir los datos específicos según tu país.');
-        }
-
-        function openChangelogModal() {
-            alert('Changelog v2.1:\n\n✅ Sistema de drawdown mejorado\n✅ 6 estadísticas en panel\n✅ Filtro de noticias integrado\n✅ Meta diaria configurable\n✅ Soporte multi-cuenta\n✅ Interfaz rediseñada\n\nPróximamente v2.2:\n• Trading múltiples pares\n• Dashboard web\n• App móvil');
-        }
-
         function openDocsModal() {
             window.open('https://docs.adberry.com', '_blank') || alert('Documentación disponible próximamente. Contacta por WhatsApp para recibir el manual PDF.');
         }
@@ -1500,7 +1700,6 @@
             if (event.target.classList.contains('modal')) {
                 event.target.classList.remove('active');
                 document.body.style.overflow = '';
-                // Stop video if demo modal
                 if (event.target.id === 'demoModal') {
                     document.getElementById('demoVideo').src = '';
                 }
