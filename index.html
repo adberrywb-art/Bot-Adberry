@@ -1,0 +1,1721 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adberry Pro v2.1 | Trading Bot Automatizado para MT5</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        trading: {
+                            dark: '#0a0a0f',
+                            card: '#12121a',
+                            accent: '#00d4ff',
+                            success: '#00ff88',
+                            danger: '#ff4757',
+                            warning: '#ffa502',
+                            muted: '#6c757d',
+                            border: '#2a2a3a'
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                        'slide-up': 'slideUp 0.6s ease-out',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-20px)' },
+                        },
+                        glow: {
+                            '0%': { boxShadow: '0 0 5px #00d4ff, 0 0 10px #00d4ff' },
+                            '100%': { boxShadow: '0 0 20px #00d4ff, 0 0 30px #00d4ff' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(30px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background: #0a0a0f;
+            overflow-x: hidden;
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #00d4ff 0%, #00ff88 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .glass-card {
+            background: rgba(18, 18, 26, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(42, 42, 58, 0.5);
+        }
+        
+        .neon-border {
+            position: relative;
+        }
+        
+        .neon-border::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            background: linear-gradient(135deg, #00d4ff, #00ff88, #00d4ff);
+            border-radius: inherit;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .neon-border:hover::before {
+            opacity: 1;
+        }
+        
+        .chart-line {
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: drawLine 3s ease-out forwards;
+        }
+        
+        @keyframes drawLine {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+        
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #00d4ff;
+            border-radius: 50%;
+            opacity: 0.5;
+            animation: particle 10s infinite;
+        }
+        
+        @keyframes particle {
+            0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100vh) translateX(100px); opacity: 0; }
+        }
+        
+        .live-dot {
+            animation: livePulse 2s infinite;
+        }
+        
+        @keyframes livePulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+        
+        .price-tag {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .price-tag::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                transparent 30%,
+                rgba(255,255,255,0.1) 50%,
+                transparent 70%
+            );
+            transform: rotate(45deg);
+            transition: all 0.5s;
+        }
+        
+        .price-tag:hover::after {
+            left: 100%;
+        }
+        
+        .metric-card {
+            transition: all 0.3s ease;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 212, 255, 0.1);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            transition: all 0.3s;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.4);
+        }
+        
+        .comparison-row:hover {
+            background: rgba(0, 212, 255, 0.05);
+        }
+        
+        .check-icon {
+            color: #00ff88;
+        }
+        
+        .x-icon {
+            color: #ff4757;
+        }
+        
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: #12121a;
+            border: 1px solid #2a2a3a;
+            border-radius: 16px;
+            max-width: 900px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+            background: #0a0a0f;
+            border-radius: 12px;
+        }
+        
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .demo-placeholder {
+            background: linear-gradient(135deg, #12121a 0%, #1a1a2e 100%);
+            border: 2px dashed #2a2a3a;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .demo-placeholder:hover {
+            border-color: #00d4ff;
+            background: rgba(0, 212, 255, 0.05);
+        }
+
+        .changelog-item {
+            position: relative;
+            padding-left: 24px;
+        }
+
+        .changelog-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 8px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #00d4ff;
+        }
+
+        .changelog-item:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            left: 3px;
+            top: 20px;
+            width: 2px;
+            height: calc(100% - 12px);
+            background: linear-gradient(to bottom, #00d4ff, transparent);
+        }
+    </style>
+</head>
+<body class="text-white font-sans antialiased">
+
+    <!-- Partículas de fondo -->
+    <div id="particles" class="fixed inset-0 pointer-events-none z-0"></div>
+
+    <!-- Navbar -->
+    <nav class="fixed top-0 w-full z-50 glass-card border-b border-trading-border/30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-3 cursor-pointer" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-trading-accent to-trading-success flex items-center justify-center">
+                        <i data-lucide="bot" class="w-6 h-6 text-black"></i>
+                    </div>
+                    <span class="text-xl font-bold tracking-tight">ADBE<span class="text-trading-accent">RRY</span> PRO</span>
+                </div>
+                
+                <div class="hidden md:flex items-center gap-8">
+                    <a href="#features" class="text-sm text-trading-muted hover:text-white transition-colors">Características</a>
+                    <a href="#comparison" class="text-sm text-trading-muted hover:text-white transition-colors">Comparador</a>
+                    <a href="#pricing" class="text-sm text-trading-muted hover:text-white transition-colors">Precios</a>
+                    <a href="#faq" class="text-sm text-trading-muted hover:text-white transition-colors">FAQ</a>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <div class="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-trading-success/10 border border-trading-success/30">
+                        <div class="w-2 h-2 rounded-full bg-trading-success live-dot"></div>
+                        <span class="text-xs text-trading-success font-medium">Bot Activo</span>
+                    </div>
+                    <a href="#pricing" class="btn-primary px-5 py-2.5 rounded-lg text-sm font-semibold text-black">
+                        Comprar Ahora
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative pt-32 pb-20 lg:pt-40 lg:pb-32 overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-b from-trading-accent/5 via-transparent to-transparent"></div>
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div class="space-y-8 animate-slide-up">
+                    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-trading-accent/10 border border-trading-accent/30 cursor-pointer hover:bg-trading-accent/20 transition-colors" onclick="openDemoModal()">
+                        <span class="text-trading-accent text-sm font-medium">v2.1 Disponible</span>
+                        <span class="text-trading-muted text-sm">|</span>
+                        <span class="text-trading-muted text-sm">MT5 Compatible</span>
+                        <i data-lucide="play-circle" class="w-4 h-4 text-trading-accent ml-1"></i>
+                    </div>
+                    
+                    <h1 class="text-5xl lg:text-7xl font-bold leading-tight">
+                        Domina los <br>
+                        <span class="gradient-text">Mercados 24/7</span>
+                    </h1>
+                    
+                    <p class="text-lg text-trading-muted max-w-xl leading-relaxed">
+                        Bot de trading automatizado para MetaTrader 5. Algoritmo inteligente con gestión de riesgo avanzada, 
+                        protección de noticias y sistema de recuperación automática.
+                    </p>
+
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <a href="#pricing" class="btn-primary px-8 py-4 rounded-xl text-lg font-semibold text-black text-center">
+                            Obtener Acceso
+                        </a>
+                        <button onclick="openDemoModal()" class="px-8 py-4 rounded-xl text-lg font-semibold border border-trading-border hover:border-trading-accent/50 transition-colors text-center flex items-center justify-center gap-2 group">
+                            <i data-lucide="play-circle" class="w-5 h-5 group-hover:text-trading-accent transition-colors"></i>
+                            Ver Demo
+                        </button>
+                    </div>
+
+                    <div class="flex items-center gap-6 pt-4">
+                        <div class="flex -space-x-3">
+                            <img src="https://i.pravatar.cc/150?img=1" class="w-10 h-10 rounded-full border-2 border-trading-dark" alt="User">
+                            <img src="https://i.pravatar.cc/150?img=2" class="w-10 h-10 rounded-full border-2 border-trading-dark" alt="User">
+                            <img src="https://i.pravatar.cc/150?img=3" class="w-10 h-10 rounded-full border-2 border-trading-dark" alt="User">
+                            <div class="w-10 h-10 rounded-full border-2 border-trading-dark bg-trading-card flex items-center justify-center text-xs font-medium">+2k</div>
+                        </div>
+                        <div class="text-sm">
+                            <span class="text-trading-success font-semibold">2,000+</span>
+                            <span class="text-trading-muted">traders activos</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dashboard Preview -->
+                <div class="relative animate-float cursor-pointer" onclick="openDemoModal()">
+                    <div class="absolute -inset-4 bg-gradient-to-r from-trading-accent/20 to-trading-success/20 rounded-3xl blur-3xl"></div>
+                    <div class="relative glass-card rounded-2xl p-6 border border-trading-border/50 hover:border-trading-accent/50 transition-all">
+                        <div class="absolute top-4 right-4 px-3 py-1 rounded-full bg-trading-accent/20 border border-trading-accent/30 text-xs text-trading-accent font-medium flex items-center gap-1">
+                            <i data-lucide="play" class="w-3 h-3"></i>
+                            Click para Demo
+                        </div>
+                        <!-- Header del panel -->
+                        <div class="flex justify-between items-center mb-6">
+                            <div class="flex items-center gap-3">
+                                <div class="w-3 h-3 rounded-full bg-trading-danger"></div>
+                                <div class="w-3 h-3 rounded-full bg-trading-warning"></div>
+                                <div class="w-3 h-3 rounded-full bg-trading-success"></div>
+                            </div>
+                            <div class="flex items-center gap-2 text-xs text-trading-muted">
+                                <div class="w-2 h-2 rounded-full bg-trading-success live-dot"></div>
+                                ACTIVO
+                            </div>
+                        </div>
+
+                        <!-- Métricas -->
+                        <div class="grid grid-cols-2 gap-4 mb-6">
+                            <div class="bg-trading-dark/50 rounded-xl p-4">
+                                <div class="text-xs text-trading-muted mb-1">BALANCE</div>
+                                <div class="text-2xl font-bold font-mono text-trading-accent">$3,754.30</div>
+                            </div>
+                            <div class="bg-trading-dark/50 rounded-xl p-4">
+                                <div class="text-xs text-trading-muted mb-1">GANANCIAS</div>
+                                <div class="text-2xl font-bold font-mono text-trading-success">+$16.40</div>
+                            </div>
+                        </div>
+
+                        <!-- Gráfico animado -->
+                        <div class="relative h-40 bg-trading-dark/30 rounded-xl overflow-hidden mb-6">
+                            <svg class="absolute inset-0 w-full h-full" viewBox="0 0 400 150" preserveAspectRatio="none">
+                                <defs>
+                                    <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                        <stop offset="0%" style="stop-color:#00d4ff;stop-opacity:0.3" />
+                                        <stop offset="100%" style="stop-color:#00d4ff;stop-opacity:0" />
+                                    </linearGradient>
+                                </defs>
+                                <path d="M0,120 Q50,100 100,110 T200,80 T300,60 T400,40" 
+                                      fill="none" 
+                                      stroke="#00d4ff" 
+                                      stroke-width="3"
+                                      class="chart-line"/>
+                                <path d="M0,120 Q50,100 100,110 T200,80 T300,60 T400,40 L400,150 L0,150 Z" 
+                                      fill="url(#chartGradient)"
+                                      opacity="0.5"/>
+                            </svg>
+                            <div class="absolute top-4 right-4 px-3 py-1 rounded-full bg-trading-success/20 border border-trading-success/30 text-xs text-trading-success font-medium">
+                                +43.9%
+                            </div>
+                        </div>
+
+                        <!-- Estadísticas -->
+                        <div class="grid grid-cols-3 gap-3">
+                            <div class="text-center p-3 bg-trading-dark/30 rounded-lg">
+                                <div class="text-xs text-trading-muted">DRAWDOWN</div>
+                                <div class="text-sm font-mono text-trading-danger">-$0.00</div>
+                            </div>
+                            <div class="text-center p-3 bg-trading-dark/30 rounded-lg">
+                                <div class="text-xs text-trading-muted">TRADES</div>
+                                <div class="text-sm font-mono text-white">2</div>
+                            </div>
+                            <div class="text-center p-3 bg-trading-dark/30 rounded-lg">
+                                <div class="text-xs text-trading-muted">EFICIENCIA</div>
+                                <div class="text-sm font-mono text-trading-accent">82%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Bar -->
+    <section class="py-8 border-y border-trading-border/30 bg-trading-card/30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-trading-accent font-mono" id="stat-returns">+847%</div>
+                    <div class="text-sm text-trading-muted mt-1">Retorno Anual</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-trading-success font-mono" id="stat-winrate">73%</div>
+                    <div class="text-sm text-trading-muted mt-1">Win Rate</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-white font-mono" id="stat-users">2,000+</div>
+                    <div class="text-sm text-trading-muted mt-1">Usuarios Activos</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-trading-warning font-mono" id="stat-support">24/7</div>
+                    <div class="text-sm text-trading-muted mt-1">Soporte Técnico</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-20 lg:py-32">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <h2 class="text-3xl lg:text-5xl font-bold mb-6">
+                    Tecnología de <span class="gradient-text">Institucional</span>
+                </h2>
+                <p class="text-trading-muted text-lg">
+                    Algoritmos avanzados utilizados por hedge funds, ahora disponibles para tu cuenta personal.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Feature 1 -->
+                <div class="metric-card glass-card rounded-2xl p-6 border border-trading-border/50 cursor-pointer" onclick="openFeatureModal('ia')">
+                    <div class="w-12 h-12 rounded-xl bg-trading-accent/10 flex items-center justify-center mb-4">
+                        <i data-lucide="brain" class="w-6 h-6 text-trading-accent"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">IA Predictiva</h3>
+                    <p class="text-trading-muted text-sm leading-relaxed">
+                        Algoritmo EMA dual con análisis de momentum en tiempo real para entradas precisas.
+                    </p>
+                    <div class="mt-4 flex items-center gap-2 text-trading-accent text-sm">
+                        <span>Ver más</span>
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </div>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="metric-card glass-card rounded-2xl p-6 border border-trading-border/50 cursor-pointer" onclick="openFeatureModal('protection')">
+                    <div class="w-12 h-12 rounded-xl bg-trading-success/10 flex items-center justify-center mb-4">
+                        <i data-lucide="shield" class="w-6 h-6 text-trading-success"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Protección de Capital</h3>
+                    <p class="text-trading-muted text-sm leading-relaxed">
+                        Sistema de martingala controlado con límite de 13 niveles y stop loss dinámico.
+                    </p>
+                    <div class="mt-4 flex items-center gap-2 text-trading-accent text-sm">
+                        <span>Ver más</span>
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </div>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="metric-card glass-card rounded-2xl p-6 border border-trading-border/50 cursor-pointer" onclick="openFeatureModal('news')">
+                    <div class="w-12 h-12 rounded-xl bg-trading-warning/10 flex items-center justify-center mb-4">
+                        <i data-lucide="newspaper" class="w-6 h-6 text-trading-warning"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Filtro de Noticias</h3>
+                    <p class="text-trading-muted text-sm leading-relaxed">
+                        Conexión directa con Forex Factory. Pausa automática 40 minutos antes de noticias de alto impacto.
+                    </p>
+                    <div class="mt-4 flex items-center gap-2 text-trading-accent text-sm">
+                        <span>Ver más</span>
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </div>
+                </div>
+
+                <!-- Feature 4 -->
+                <div class="metric-card glass-card rounded-2xl p-6 border border-trading-border/50 cursor-pointer" onclick="openFeatureModal('volatility')">
+                    <div class="w-12 h-12 rounded-xl bg-trading-danger/10 flex items-center justify-center mb-4">
+                        <i data-lucide="activity" class="w-6 h-6 text-trading-danger"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Anti-Volatilidad</h3>
+                    <p class="text-trading-muted text-sm leading-relaxed">
+                        Detector de rangos ATR. Evita operar en condiciones de mercado inestables o manipulación.
+                    </p>
+                    <div class="mt-4 flex items-center gap-2 text-trading-accent text-sm">
+                        <span>Ver más</span>
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </div>
+                </div>
+
+                <!-- Feature 5 -->
+                <div class="metric-card glass-card rounded-2xl p-6 border border-trading-border/50 cursor-pointer" onclick="openFeatureModal('target')">
+                    <div class="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center mb-4">
+                        <i data-lucide="target" class="w-6 h-6 text-purple-400"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Meta Diaria</h3>
+                    <p class="text-trading-muted text-sm leading-relaxed">
+                        Configuración de objetivo diario personalizable. El bot se detiene automáticamente al alcanzarlo.
+                    </p>
+                    <div class="mt-4 flex items-center gap-2 text-trading-accent text-sm">
+                        <span>Ver más</span>
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </div>
+                </div>
+
+                <!-- Feature 6 -->
+                <div class="metric-card glass-card rounded-2xl p-6 border border-trading-border/50 cursor-pointer" onclick="openFeatureModal('license')">
+                    <div class="w-12 h-12 rounded-xl bg-pink-500/10 flex items-center justify-center mb-4">
+                        <i data-lucide="lock" class="w-6 h-6 text-pink-400"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Licencia Segura</h3>
+                    <p class="text-trading-muted text-sm leading-relaxed">
+                        Protección por número de cuenta. Sin cuotas mensuales ocultas. Actualizaciones gratuitas.
+                    </p>
+                    <div class="mt-4 flex items-center gap-2 text-trading-accent text-sm">
+                        <span>Ver más</span>
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Comparison Section -->
+    <section id="comparison" class="py-20 lg:py-32 bg-trading-card/20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <h2 class="text-3xl lg:text-5xl font-bold mb-6">
+                    Por qué somos <span class="gradient-text">Superiores</span>
+                </h2>
+                <p class="text-trading-muted text-lg">
+                    Comparación objetiva con otros bots del mercado. Sin marketing engañoso, solo datos reales.
+                </p>
+            </div>
+
+            <div class="glass-card rounded-2xl border border-trading-border/50 overflow-hidden">
+                <!-- Header -->
+                <div class="grid grid-cols-4 gap-4 p-6 bg-trading-dark/50 border-b border-trading-border/30 font-semibold text-sm">
+                    <div class="text-trading-muted">Característica</div>
+                    <div class="text-center text-trading-muted">Otros Bots</div>
+                    <div class="text-center text-trading-accent">Adberry Pro</div>
+                    <div class="text-center text-trading-muted">Ventaja</div>
+                </div>
+
+                <!-- Rows -->
+                <div class="comparison-row grid grid-cols-4 gap-4 p-6 border-b border-trading-border/20 items-center transition-colors">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="dollar-sign" class="w-4 h-4 text-trading-accent"></i>
+                        <span class="text-sm">Costo Mensual</span>
+                    </div>
+                    <div class="text-center text-trading-danger font-mono">$50-200/mes</div>
+                    <div class="text-center text-trading-success font-mono font-bold">$0 (Pago único)</div>
+                    <div class="text-center text-xs text-trading-success">Ahorro 100%</div>
+                </div>
+
+                <div class="comparison-row grid grid-cols-4 gap-4 p-6 border-b border-trading-border/20 items-center transition-colors">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="newspaper" class="w-4 h-4 text-trading-accent"></i>
+                        <span class="text-sm">Filtro de Noticias</span>
+                    </div>
+                    <div class="text-center"><i data-lucide="x" class="w-5 h-5 x-icon mx-auto"></i></div>
+                    <div class="text-center"><i data-lucide="check" class="w-5 h-5 check-icon mx-auto"></i></div>
+                    <div class="text-center text-xs text-trading-success">Protección real</div>
+                </div>
+
+                <div class="comparison-row grid grid-cols-4 gap-4 p-6 border-b border-trading-border/20 items-center transition-colors">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="activity" class="w-4 h-4 text-trading-accent"></i>
+                        <span class="text-sm">Anti-Volatilidad</span>
+                    </div>
+                    <div class="text-center"><i data-lucide="x" class="w-5 h-5 x-icon mx-auto"></i></div>
+                    <div class="text-center"><i data-lucide="check" class="w-5 h-5 check-icon mx-auto"></i></div>
+                    <div class="text-center text-xs text-trading-success">Menos riesgo</div>
+                </div>
+
+                <div class="comparison-row grid grid-cols-4 gap-4 p-6 border-b border-trading-border/20 items-center transition-colors">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="target" class="w-4 h-4 text-trading-accent"></i>
+                        <span class="text-sm">Meta Diaria Auto</span>
+                    </div>
+                    <div class="text-center"><i data-lucide="x" class="w-5 h-5 x-icon mx-auto"></i></div>
+                    <div class="text-center"><i data-lucide="check" class="w-5 h-5 check-icon mx-auto"></i></div>
+                    <div class="text-center text-xs text-trading-success">Gestión disciplined</div>
+                </div>
+
+                <div class="comparison-row grid grid-cols-4 gap-4 p-6 border-b border-trading-border/20 items-center transition-colors">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="shield" class="w-4 h-4 text-trading-accent"></i>
+                        <span class="text-sm">Límite de Niveles</span>
+                    </div>
+                    <div class="text-center text-trading-danger font-mono">Ilimitado</div>
+                    <div class="text-center text-trading-success font-mono font-bold">Máx 13</div>
+                    <div class="text-center text-xs text-trading-success">Protección capital</div>
+                </div>
+
+                <div class="comparison-row grid grid-cols-4 gap-4 p-6 border-b border-trading-border/20 items-center transition-colors">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="zap" class="w-4 h-4 text-trading-accent"></i>
+                        <span class="text-sm">Velocidad de Ejecución</span>
+                    </div>
+                    <div class="text-center text-trading-muted">~500ms</div>
+                    <div class="text-center text-trading-success font-mono font-bold">~50ms</div>
+                    <div class="text-center text-xs text-trading-success">10x más rápido</div>
+                </div>
+
+                <div class="comparison-row grid grid-cols-4 gap-4 p-6 border-b border-trading-border/20 items-center transition-colors">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="headphones" class="w-4 h-4 text-trading-accent"></i>
+                        <span class="text-sm">Soporte</span>
+                    </div>
+                    <div class="text-center text-trading-muted">Email (48h)</div>
+                    <div class="text-center text-trading-success font-bold">WhatsApp 24/7</div>
+                    <div class="text-center text-xs text-trading-success">Respuesta inmediata</div>
+                </div>
+
+                <div class="comparison-row grid grid-cols-4 gap-4 p-6 border-b border-trading-border/20 items-center transition-colors">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="refresh-cw" class="w-4 h-4 text-trading-accent"></i>
+                        <span class="text-sm">Actualizaciones</span>
+                    </div>
+                    <div class="text-center text-trading-danger font-mono">$Extra</div>
+                    <div class="text-center text-trading-success font-mono font-bold">Gratis</div>
+                    <div class="text-center text-xs text-trading-success">Siempre actualizado</div>
+                </div>
+
+                <div class="comparison-row grid grid-cols-4 gap-4 p-6 items-center transition-colors bg-trading-accent/5">
+                    <div class="flex items-center gap-2 font-semibold">
+                        <i data-lucide="calculator" class="w-4 h-4 text-trading-accent"></i>
+                        <span>Costo 1 Año</span>
+                    </div>
+                    <div class="text-center text-trading-danger font-mono text-lg">$600-2,400</div>
+                    <div class="text-center text-trading-success font-mono text-lg font-bold">$399 una vez</div>
+                    <div class="text-center text-xs text-trading-success font-bold">Ahorro 83%</div>
+                </div>
+            </div>
+
+            <div class="mt-8 text-center">
+                <p class="text-sm text-trading-muted">
+                    * Comparación basada en bots populares del mercado con características similares. Precios actualizados a 2026.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="py-20 lg:py-32">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <h2 class="text-3xl lg:text-5xl font-bold mb-6">
+                    Inversión <span class="gradient-text">Inteligente</span>
+                </h2>
+                <p class="text-trading-muted text-lg">
+                    Sin cuotas mensuales ocultas. Paga una vez, usa para siempre en tu cuenta.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                <!-- Starter -->
+                <div class="glass-card rounded-2xl p-8 border border-trading-border/50 relative">
+                    <div class="text-sm text-trading-muted mb-2">STARTER</div>
+                    <div class="text-4xl font-bold mb-6">$199</div>
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-center gap-3 text-sm">
+                            <i data-lucide="check" class="w-5 h-5 text-trading-success"></i>
+                            <span>1 Cuenta MT5</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-sm">
+                            <i data-lucide="check" class="w-5 h-5 text-trading-success"></i>
+                            <span>Licencia 3 meses</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-sm">
+                            <i data-lucide="check" class="w-5 h-5 text-trading-success"></i>
+                            <span>Soporte por email</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-sm text-trading-muted">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                            <span>Actualizaciones</span>
+                        </li>
+                    </ul>
+                    <button onclick="openPaymentModal('starter')" class="w-full py-3 rounded-xl border border-trading-border hover:border-trading-accent/50 transition-colors font-semibold">
+                        Seleccionar
+                    </button>
+                </div>
+
+                <!-- Pro - Popular -->
+                <div class="glass-card rounded-2xl p-8 border-2 border-trading-accent relative price-tag transform scale-105">
+                    <div class="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-trading-accent text-black text-sm font-bold rounded-full">
+                        MÁS POPULAR
+                    </div>
+                    <div class="text-sm text-trading-accent mb-2">PRO</div>
+                    <div class="text-4xl font-bold mb-6">$399</div>
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-center gap-3 text-sm">
+                            <i data-lucide="check" class="w-5 h-5 text-trading-success"></i>
+                            <span>2 Cuentas MT5</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-sm">
+                            <i data-lucide="check" class="w-5 h-5 text-trading-success"></i>
+                            <span>Licencia 12 meses</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-sm">
+                            <i data-lucide="check" class="w-5 h-5 text-trading-success"></i>
+                            <span>Soporte 24/7 WhatsApp</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-sm">
+                            <i data-lucide="check" class="w-5 h-5 text-trading-success"></i>
+                            <span>Actualizaciones incluidas</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-sm">
+                            <i data-lucide="check" class="w-5 h-5 text-trading-success"></i>
+                            <span>Configuración remota</span>
+                        </li>
+                    </ul>
+                    <button onclick="openPaymentModal('pro')" class="w-full py-3 rounded-xl btn-primary text-black font-semibold">
+                        Comprar Ahora
+                    </button>
+                </div>
+
+                <!-- Enterprise -->
+                <div class="glass-card rounded-2xl p-8 border border-trading-border/50 relative">
+                    <div class="text-sm text-trading-muted mb-2">ENTERPRISE</div>
+                    <div class="text-4xl font-bold mb-6">$899</div>
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-center gap-3 text-sm">
+                            <i data-lucide="check" class="w-5 h-5 text-trading-success"></i>
+                            <span>5 Cuentas MT5</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-sm">
+                            <i data-lucide="check" class="w-5 h-5 text-trading-success"></i>
+                            <span>Licencia vitalicia</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-sm">
+                            <i data-lucide="check" class="w-5 h-5 text-trading-success"></i>
+                            <span>Soporte prioritario 24/7</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-sm">
+                            <i data-lucide="check" class="w-5 h-5 text-trading-success"></i>
+                            <span>Backtesting ilimitado</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-sm">
+                            <i data-lucide="check" class="w-5 h-5 text-trading-success"></i>
+                            <span>Personalización avanzada</span>
+                        </li>
+                    </ul>
+                    <button onclick="openContactModal('enterprise')" class="w-full py-3 rounded-xl border border-trading-border hover:border-trading-accent/50 transition-colors font-semibold">
+                        Contactar
+                    </button>
+                </div>
+            </div>
+
+            <div class="mt-12 text-center">
+                <p class="text-trading-muted text-sm mb-4">
+                    💳 Aceptamos transferencia bancaria, PayPal, Wise y criptomonedas (BTC, USDT)
+                </p>
+                <button onclick="openPaymentMethodsModal()" class="text-trading-accent text-sm hover:underline">
+                    Ver todos los métodos de pago →
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section id="faq" class="py-20 lg:py-32 bg-trading-card/20">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl lg:text-4xl font-bold text-center mb-12">
+                Preguntas <span class="gradient-text">Frecuentes</span>
+            </h2>
+
+            <div class="space-y-4" id="faq-container">
+                <div class="glass-card rounded-xl border border-trading-border/50 overflow-hidden">
+                    <button class="w-full px-6 py-4 flex justify-between items-center text-left faq-toggle">
+                        <span class="font-medium">¿Funciona en cualquier broker de MT5?</span>
+                        <i data-lucide="chevron-down" class="w-5 h-5 text-trading-muted transition-transform"></i>
+                    </button>
+                    <div class="px-6 pb-4 text-trading-muted text-sm hidden">
+                        Sí, Adberry Pro es compatible con cualquier broker que utilice MetaTrader 5. Recomendamos brokers con bajo spread en XAUUSD como IC Markets, Pepperstone o RoboForex.
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-xl border border-trading-border/50 overflow-hidden">
+                    <button class="w-full px-6 py-4 flex justify-between items-center text-left faq-toggle">
+                        <span class="font-medium">¿Necesito dejar la computadora encendida?</span>
+                        <i data-lucide="chevron-down" class="w-5 h-5 text-trading-muted transition-transform"></i>
+                    </button>
+                    <div class="px-6 pb-4 text-trading-muted text-sm hidden">
+                        Para operar 24/7 recomendamos un VPS (Servidor Virtual). Podemos recomendarte opciones económicas desde $5/mes o configurarlo por ti por $50 adicionales.
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-xl border border-trading-border/50 overflow-hidden">
+                    <button class="w-full px-6 py-4 flex justify-between items-center text-left faq-toggle">
+                        <span class="font-medium">¿Cuánto capital necesito para empezar?</span>
+                        <i data-lucide="chevron-down" class="w-5 h-5 text-trading-muted transition-transform"></i>
+                    </button>
+                    <div class="px-6 pb-4 text-trading-muted text-sm hidden">
+                        Recomendamos mínimo $1,000 USD en cuenta estándar o $100 USD en cuenta cent. El bot ajusta automáticamente el tamaño de lote según tu balance.
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-xl border border-trading-border/50 overflow-hidden">
+                    <button class="w-full px-6 py-4 flex justify-between items-center text-left faq-toggle">
+                        <span class="font-medium">¿Puedo probar antes de comprar?</span>
+                        <i data-lucide="chevron-down" class="w-5 h-5 text-trading-muted transition-transform"></i>
+                    </button>
+                    <div class="px-6 pb-4 text-trading-muted text-sm hidden">
+                        Sí, ofrecemos cuenta demo gratuita por 7 días. <button onclick="openDemoModal()" class="text-trading-accent hover:underline">Haz click aquí</button> o contactanos por WhatsApp para activar tu prueba sin compromiso.
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-xl border border-trading-border/50 overflow-hidden">
+                    <button class="w-full px-6 py-4 flex justify-between items-center text-left faq-toggle">
+                        <span class="font-medium">¿Qué pasa si no me funciona?</span>
+                        <i data-lucide="chevron-down" class="w-5 h-5 text-trading-muted transition-transform"></i>
+                    </button>
+                    <div class="px-6 pb-4 text-trading-muted text-sm hidden">
+                        Ofrecemos garantía de 15 días. Si el bot no genera resultados positivos en ese período, te devolvemos el 100% de tu inversión sin preguntas. <button onclick="openLegalModal('refund')" class="text-trading-accent hover:underline">Ver términos completos</button>.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-20 lg:py-32 relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-r from-trading-accent/10 to-trading-success/10"></div>
+        <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%2300d4ff\' fill-opacity=\'0.05\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"></div>
+        
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+            <h2 class="text-4xl lg:text-6xl font-bold mb-6">
+                Empieza a operar <br>
+                <span class="gradient-text">como un profesional</span>
+            </h2>
+            <p class="text-xl text-trading-muted mb-8 max-w-2xl mx-auto">
+                Únete a miles de traders que ya automatizaron sus ganancias. 
+                Tu dinero trabajando 24/7 mientras tú descansas.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="https://wa.me/1234567890" target="_blank" class="btn-primary px-8 py-4 rounded-xl text-lg font-semibold text-black inline-flex items-center justify-center gap-2">
+                    <i data-lucide="message-circle" class="w-5 h-5"></i>
+                    Contactar por WhatsApp
+                </a>
+                <button onclick="openDemoModal()" class="px-8 py-4 rounded-xl text-lg font-semibold border border-trading-border hover:border-trading-accent/50 transition-colors inline-flex items-center justify-center gap-2">
+                    <i data-lucide="play-circle" class="w-5 h-5"></i>
+                    Ver Demo Gratis
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-trading-border/30 py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8 mb-8">
+                <div>
+                    <div class="flex items-center gap-2 mb-4 cursor-pointer" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+                        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-trading-accent to-trading-success flex items-center justify-center">
+                            <i data-lucide="bot" class="w-5 h-5 text-black"></i>
+                        </div>
+                        <span class="font-bold">ADBE<span class="text-trading-accent">RRY</span> PRO</span>
+                    </div>
+                    <p class="text-sm text-trading-muted">
+                        Tecnología de trading automatizado para traders exigentes. 
+                        Operando en los mercados desde 2024.
+                    </p>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold mb-4">Producto</h4>
+                    <ul class="space-y-2 text-sm text-trading-muted">
+                        <li><a href="#features" class="hover:text-white transition-colors">Características</a></li>
+                        <li><a href="#pricing" class="hover:text-white transition-colors">Precios</a></li>
+                        <li><a href="#" onclick="openDemoModal(); return false;" class="hover:text-white transition-colors">Demo Gratis</a></li>
+                        <li><a href="#" onclick="openChangelogModal(); return false;" class="hover:text-white transition-colors">Changelog</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="font-semibold mb-4">Soporte</h4>
+                    <ul class="space-y-2 text-sm text-trading-muted">
+                        <li><a href="#" onclick="openDocsModal(); return false;" class="hover:text-white transition-colors">Documentación</a></li>
+                        <li><a href="#" onclick="openTutorialsModal(); return false;" class="hover:text-white transition-colors">Tutoriales</a></li>
+                        <li><a href="https://wa.me/1234567890" target="_blank" class="hover:text-white transition-colors">WhatsApp</a></li>
+                        <li><a href="mailto:soporte@adberry.com" class="hover:text-white transition-colors">Email</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="font-semibold mb-4">Legal</h4>
+                    <ul class="space-y-2 text-sm text-trading-muted">
+                        <li><button onclick="openLegalModal('terms')" class="hover:text-white transition-colors text-left">Términos de uso</button></li>
+                        <li><button onclick="openLegalModal('privacy')" class="hover:text-white transition-colors text-left">Política de privacidad</button></li>
+                        <li><button onclick="openLegalModal('risk')" class="hover:text-white transition-colors text-left">Aviso de riesgo</button></li>
+                        <li><button onclick="openLegalModal('refund')" class="hover:text-white transition-colors text-left">Política de reembolso</button></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-trading-border/30 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                <p class="text-sm text-trading-muted">
+                    © 2026 Adberry Trading Systems. Todos los derechos reservados.
+                </p>
+                <div class="flex gap-4">
+                    <a href="https://twitter.com/adberrypro" target="_blank" class="w-10 h-10 rounded-lg bg-trading-card flex items-center justify-center hover:bg-trading-accent/20 transition-colors">
+                        <i data-lucide="twitter" class="w-5 h-5"></i>
+                    </a>
+                    <a href="https://instagram.com/adberrypro" target="_blank" class="w-10 h-10 rounded-lg bg-trading-card flex items-center justify-center hover:bg-trading-accent/20 transition-colors">
+                        <i data-lucide="instagram" class="w-5 h-5"></i>
+                    </a>
+                    <a href="https://youtube.com/@adberrypro" target="_blank" class="w-10 h-10 rounded-lg bg-trading-card flex items-center justify-center hover:bg-trading-accent/20 transition-colors">
+                        <i data-lucide="youtube" class="w-5 h-5"></i>
+                    </a>
+                    <a href="https://t.me/adberrypro" target="_blank" class="w-10 h-10 rounded-lg bg-trading-card flex items-center justify-center hover:bg-trading-accent/20 transition-colors">
+                        <i data-lucide="send" class="w-5 h-5"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- DEMO MODAL -->
+    <div id="demoModal" class="modal">
+        <div class="modal-content">
+            <div class="p-6 border-b border-trading-border/30 flex justify-between items-center">
+                <h3 class="text-xl font-bold flex items-center gap-2">
+                    <i data-lucide="play-circle" class="w-6 h-6 text-trading-accent"></i>
+                    Demo en Vivo - Adberry Pro v2.1
+                </h3>
+                <button onclick="closeDemoModal()" class="w-8 h-8 rounded-lg hover:bg-trading-card flex items-center justify-center transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-6">
+                <div class="video-container mb-6" id="videoContainer" style="display: none;">
+                    <iframe id="demoVideo" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </div>
+                
+                <div class="demo-placeholder mb-6" id="demoPlaceholder" onclick="requestDemoAccess()">
+                    <div class="w-20 h-20 rounded-full bg-trading-accent/20 flex items-center justify-center mb-4">
+                        <i data-lucide="play" class="w-10 h-10 text-trading-accent"></i>
+                    </div>
+                    <h4 class="text-xl font-semibold mb-2">Acceso a Demo en Vivo</h4>
+                    <p class="text-trading-muted text-center max-w-md mb-4">
+                        Actualmente la demo se proporciona personalmente vía AnyDesk o TeamViewer. 
+                        Agenda una sesión de 15 minutos para ver el bot operando en tiempo real.
+                    </p>
+                    <button class="btn-primary px-6 py-3 rounded-lg text-black font-semibold flex items-center gap-2">
+                        <i data-lucide="calendar" class="w-5 h-5"></i>
+                        Agendar Demo Personalizada
+                    </button>
+                </div>
+
+                <div class="grid md:grid-cols-3 gap-4">
+                    <div class="glass-card rounded-xl p-4 text-center border border-trading-border/30">
+                        <i data-lucide="eye" class="w-8 h-8 text-trading-accent mx-auto mb-2"></i>
+                        <div class="font-semibold">Observa en Vivo</div>
+                        <div class="text-sm text-trading-muted">Operaciones reales en tiempo real</div>
+                    </div>
+                    <div class="glass-card rounded-xl p-4 text-center border border-trading-border/30">
+                        <i data-lucide="message-square" class="w-8 h-8 text-trading-success mx-auto mb-2"></i>
+                        <div class="font-semibold">Pregunta lo que Quieras</div>
+                        <div class="text-sm text-trading-muted">Resolvemos todas tus dudas</div>
+                    </div>
+                    <div class="glass-card rounded-xl p-4 text-center border border-trading-border/30">
+                        <i data-lucide="gift" class="w-8 h-8 text-trading-warning mx-auto mb-2"></i>
+                        <div class="font-semibold">Cuenta Demo Gratis</div>
+                        <div class="text-sm text-trading-muted">7 días para probar sin riesgo</div>
+                    </div>
+                </div>
+            </div>
+            <div class="p-6 border-t border-trading-border/30 bg-trading-dark/30">
+                <div class="flex flex-col sm:flex-row gap-4 justify-between items-center">
+                    <p class="text-sm text-trading-muted">
+                        ¿Prefieres probarlo tú mismo? Solicita acceso a cuenta demo.
+                    </p>
+                    <a href="https://wa.me/1234567890?text=Hola,%20quiero%20solicitar%20una%20demo%20de%20Adberry%20Pro" target="_blank" class="btn-primary px-6 py-2 rounded-lg text-black font-semibold text-sm flex items-center gap-2">
+                        <i data-lucide="message-circle" class="w-4 h-4"></i>
+                        Solicitar por WhatsApp
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHANGELOG MODAL - NUEVO DISEÑO -->
+    <div id="changelogModal" class="modal">
+        <div class="modal-content max-w-2xl">
+            <div class="p-6 border-b border-trading-border/30 flex justify-between items-center">
+                <h3 class="text-xl font-bold flex items-center gap-2">
+                    <i data-lucide="git-commit" class="w-6 h-6 text-trading-accent"></i>
+                    Historial de Versiones
+                </h3>
+                <button onclick="closeChangelogModal()" class="w-8 h-8 rounded-lg hover:bg-trading-card flex items-center justify-center transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-6 max-h-[60vh] overflow-y-auto">
+                <!-- Versión Actual -->
+                <div class="mb-8">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="px-3 py-1 rounded-full bg-trading-accent text-black text-sm font-bold">v2.1</span>
+                        <span class="text-trading-muted text-sm">Marzo 2026</span>
+                        <span class="px-2 py-0.5 rounded bg-trading-success/20 text-trading-success text-xs">Actual</span>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="changelog-item">
+                            <p class="text-sm text-trading-muted">Nuevo sistema de drawdown mejorado que registra máximas pérdidas flotantes</p>
+                        </div>
+                        <div class="changelog-item">
+                            <p class="text-sm text-trading-muted">Panel ampliado con 6 estadísticas en formato grid 3x2</p>
+                        </div>
+                        <div class="changelog-item">
+                            <p class="text-sm text-trading-muted">Filtro de noticias integrado con Forex Factory (alertas 40min antes)</p>
+                        </div>
+                        <div class="changelog-item">
+                            <p class="text-sm text-trading-muted">Meta diaria configurable con detención automática al alcanzar objetivo</p>
+                        </div>
+                        <div class="changelog-item">
+                            <p class="text-sm text-trading-muted">Soporte multi-cuenta (hasta 5 cuentas en plan Enterprise)</p>
+                        </div>
+                        <div class="changelog-item">
+                            <p class="text-sm text-trading-muted">Interfaz completamente rediseñada con estilo moderno tipo terminal</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Versión Anterior -->
+                <div class="mb-8 opacity-60">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="px-3 py-1 rounded-full bg-trading-border text-trading-muted text-sm font-bold">v2.0</span>
+                        <span class="text-trading-muted text-sm">Enero 2026</span>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="changelog-item">
+                            <p class="text-sm text-trading-muted">Lanzamiento oficial del sistema de protección de capital</p>
+                        </div>
+                        <div class="changelog-item">
+                            <p class="text-sm text-trading-muted">Implementación de algoritmo EMA dual para señales de entrada</p>
+                        </div>
+                        <div class="changelog-item">
+                            <p class="text-sm text-trading-muted">Sistema de licencias por número de cuenta MT5</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Próxima Versión -->
+                <div>
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="px-3 py-1 rounded-full bg-trading-warning/20 text-trading-warning text-sm font-bold">v2.2</span>
+                        <span class="text-trading-muted text-sm">Próximamente</span>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="changelog-item">
+                            <p class="text-sm text-trading-muted flex items-center gap-2">
+                                <i data-lucide="clock" class="w-4 h-4 text-trading-warning"></i>
+                                Trading en múltiples pares (EURUSD, GBPUSD, XAUUSD simultáneos)
+                            </p>
+                        </div>
+                        <div class="changelog-item">
+                            <p class="text-sm text-trading-muted flex items-center gap-2">
+                                <i data-lucide="clock" class="w-4 h-4 text-trading-warning"></i>
+                                Dashboard web para monitoreo remoto desde cualquier dispositivo
+                            </p>
+                        </div>
+                        <div class="changelog-item">
+                            <p class="text-sm text-trading-muted flex items-center gap-2">
+                                <i data-lucide="clock" class="w-4 h-4 text-trading-warning"></i>
+                                App móvil nativa para iOS y Android
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAYMENT METHODS MODAL - NUEVO DISEÑO -->
+    <div id="paymentMethodsModal" class="modal">
+        <div class="modal-content max-w-lg">
+            <div class="p-6 border-b border-trading-border/30 flex justify-between items-center">
+                <h3 class="text-xl font-bold flex items-center gap-2">
+                    <i data-lucide="credit-card" class="w-6 h-6 text-trading-accent"></i>
+                    Métodos de Pago Aceptados
+                </h3>
+                <button onclick="closePaymentMethodsModal()" class="w-8 h-8 rounded-lg hover:bg-trading-card flex items-center justify-center transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <!-- PayPal -->
+                <div class="glass-card rounded-xl p-4 border border-trading-border/30 hover:border-[#0070ba]/50 transition-colors group">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-[#0070ba]/10 flex items-center justify-center flex-shrink-0 group-hover:bg-[#0070ba]/20 transition-colors">
+                            <i data-lucide="credit-card" class="w-6 h-6 text-[#0070ba]"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between mb-1">
+                                <h4 class="font-semibold">PayPal</h4>
+                                <span class="text-xs text-trading-muted">Instantáneo</span>
+                            </div>
+                            <p class="text-sm text-trading-muted mb-2">Pago seguro con protección al comprador. Acepta tarjetas de crédito/débito sin necesidad de cuenta PayPal.</p>
+                            <div class="flex gap-2">
+                                <span class="px-2 py-1 rounded bg-trading-dark text-xs text-trading-muted">Visa</span>
+                                <span class="px-2 py-1 rounded bg-trading-dark text-xs text-trading-muted">Mastercard</span>
+                                <span class="px-2 py-1 rounded bg-trading-dark text-xs text-trading-muted">Amex</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Crypto -->
+                <div class="glass-card rounded-xl p-4 border border-trading-border/30 hover:border-[#f7931a]/50 transition-colors group">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-[#f7931a]/10 flex items-center justify-center flex-shrink-0 group-hover:bg-[#f7931a]/20 transition-colors">
+                            <i data-lucide="bitcoin" class="w-6 h-6 text-[#f7931a]"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between mb-1">
+                                <h4 class="font-semibold">Criptomonedas</h4>
+                                <span class="px-2 py-0.5 rounded bg-trading-success/20 text-trading-success text-xs font-medium">5% OFF</span>
+                            </div>
+                            <p class="text-sm text-trading-muted mb-2">Descuento especial por pago en crypto. Redes soportadas: ERC20, TRC20, BEP20.</p>
+                            <div class="flex gap-2">
+                                <span class="px-2 py-1 rounded bg-trading-dark text-xs text-trading-muted">BTC</span>
+                                <span class="px-2 py-1 rounded bg-trading-dark text-xs text-trading-muted">ETH</span>
+                                <span class="px-2 py-1 rounded bg-trading-dark text-xs text-trading-muted">USDT</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transferencia -->
+                <div class="glass-card rounded-xl p-4 border border-trading-border/30 hover:border-trading-success/50 transition-colors group">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-trading-success/10 flex items-center justify-center flex-shrink-0 group-hover:bg-trading-success/20 transition-colors">
+                            <i data-lucide="landmark" class="w-6 h-6 text-trading-success"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between mb-1">
+                                <h4 class="font-semibold">Transferencia Bancaria</h4>
+                                <span class="text-xs text-trading-muted">1-2 días</span>
+                            </div>
+                            <p class="text-sm text-trading-muted mb-2">Transferencia directa a cuentas bancarias en múltiples países. Ideal para montos grandes.</p>
+                            <div class="flex gap-2">
+                                <span class="px-2 py-1 rounded bg-trading-dark text-xs text-trading-muted">USA (Chase)</span>
+                                <span class="px-2 py-1 rounded bg-trading-dark text-xs text-trading-muted">EUR (IBAN)</span>
+                                <span class="px-2 py-1 rounded bg-trading-dark text-xs text-trading-muted">MXN (BBVA)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wise -->
+                <div class="glass-card rounded-xl p-4 border border-trading-border/30 hover:border-[#9fe870]/50 transition-colors group">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-[#9fe870]/10 flex items-center justify-center flex-shrink-0 group-hover:bg-[#9fe870]/20 transition-colors">
+                            <i data-lucide="globe" class="w-6 h-6 text-[#9fe870]"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between mb-1">
+                                <h4 class="font-semibold">Wise (TransferWise)</h4>
+                                <span class="text-xs text-trading-muted">Instantáneo</span>
+                            </div>
+                            <p class="text-sm text-trading-muted mb-2">Transferencia internacional con comisión baja (0.5%). Ideal para Europa, UK y Asia.</p>
+                            <div class="flex gap-2">
+                                <span class="px-2 py-1 rounded bg-trading-dark text-xs text-trading-muted">GBP</span>
+                                <span class="px-2 py-1 rounded bg-trading-dark text-xs text-trading-muted">EUR</span>
+                                <span class="px-2 py-1 rounded bg-trading-dark text-xs text-trading-muted">+50 países</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="p-6 border-t border-trading-border/30 bg-trading-dark/30">
+                <p class="text-sm text-trading-muted text-center">
+                    ¿Necesitas otro método de pago? <a href="https://wa.me/1234567890" target="_blank" class="text-trading-accent hover:underline">Contáctanos</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- LEGAL MODALS -->
+    <div id="legalModal" class="modal">
+        <div class="modal-content max-w-2xl">
+            <div class="p-6 border-b border-trading-border/30 flex justify-between items-center">
+                <h3 id="legalTitle" class="text-xl font-bold">Términos Legales</h3>
+                <button onclick="closeLegalModal()" class="w-8 h-8 rounded-lg hover:bg-trading-card flex items-center justify-center transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-6 max-h-[60vh] overflow-y-auto" id="legalContent">
+                <!-- Contenido dinámico -->
+            </div>
+        </div>
+    </div>
+
+    <!-- PAYMENT MODAL -->
+    <div id="paymentModal" class="modal">
+        <div class="modal-content max-w-md">
+            <div class="p-6 border-b border-trading-border/30 flex justify-between items-center">
+                <h3 class="text-xl font-bold">Finalizar Compra</h3>
+                <button onclick="closePaymentModal()" class="w-8 h-8 rounded-lg hover:bg-trading-card flex items-center justify-center transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-6">
+                <div id="paymentPlanDetails" class="glass-card rounded-xl p-4 border border-trading-border/30 mb-6">
+                    <!-- Detalles del plan -->
+                </div>
+                
+                <div class="space-y-3">
+                    <p class="text-sm text-trading-muted mb-4">Selecciona tu método de pago:</p>
+                    
+                    <button onclick="processPayment('paypal')" class="w-full p-4 rounded-xl border border-trading-border hover:border-trading-accent/50 transition-all flex items-center gap-3 group">
+                        <div class="w-10 h-10 rounded-lg bg-[#0070ba]/20 flex items-center justify-center">
+                            <i data-lucide="credit-card" class="w-5 h-5 text-[#0070ba]"></i>
+                        </div>
+                        <div class="text-left flex-1">
+                            <div class="font-medium">PayPal</div>
+                            <div class="text-xs text-trading-muted">Pago seguro internacional</div>
+                        </div>
+                        <i data-lucide="arrow-right" class="w-5 h-5 text-trading-muted group-hover:text-trading-accent transition-colors"></i>
+                    </button>
+
+                    <button onclick="processPayment('crypto')" class="w-full p-4 rounded-xl border border-trading-border hover:border-trading-accent/50 transition-all flex items-center gap-3 group">
+                        <div class="w-10 h-10 rounded-lg bg-[#f7931a]/20 flex items-center justify-center">
+                            <i data-lucide="bitcoin" class="w-5 h-5 text-[#f7931a]"></i>
+                        </div>
+                        <div class="text-left flex-1">
+                            <div class="font-medium">Criptomonedas</div>
+                            <div class="text-xs text-trading-muted">BTC, USDT, ETH</div>
+                        </div>
+                        <i data-lucide="arrow-right" class="w-5 h-5 text-trading-muted group-hover:text-trading-accent transition-colors"></i>
+                    </button>
+
+                    <button onclick="processPayment('transfer')" class="w-full p-4 rounded-xl border border-trading-border hover:border-trading-accent/50 transition-all flex items-center gap-3 group">
+                        <div class="w-10 h-10 rounded-lg bg-trading-success/20 flex items-center justify-center">
+                            <i data-lucide="landmark" class="w-5 h-5 text-trading-success"></i>
+                        </div>
+                        <div class="text-left flex-1">
+                            <div class="font-medium">Transferencia Bancaria</div>
+                            <div class="text-xs text-trading-muted">USD, EUR, MXN</div>
+                        </div>
+                        <i data-lucide="arrow-right" class="w-5 h-5 text-trading-muted group-hover:text-trading-accent transition-colors"></i>
+                    </button>
+
+                    <button onclick="processPayment('wise')" class="w-full p-4 rounded-xl border border-trading-border hover:border-trading-accent/50 transition-all flex items-center gap-3 group">
+                        <div class="w-10 h-10 rounded-lg bg-[#9fe870]/20 flex items-center justify-center">
+                            <i data-lucide="globe" class="w-5 h-5 text-[#9fe870]"></i>
+                        </div>
+                        <div class="text-left flex-1">
+                            <div class="font-medium">Wise (TransferWise)</div>
+                            <div class="text-xs text-trading-muted">Transferencia internacional</div>
+                        </div>
+                        <i data-lucide="arrow-right" class="w-5 h-5 text-trading-muted group-hover:text-trading-accent transition-colors"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTACT MODAL -->
+    <div id="contactModal" class="modal">
+        <div class="modal-content max-w-md">
+            <div class="p-6 border-b border-trading-border/30 flex justify-between items-center">
+                <h3 class="text-xl font-bold">Contactar Ventas</h3>
+                <button onclick="closeContactModal()" class="w-8 h-8 rounded-lg hover:bg-trading-card flex items-center justify-center transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-6">
+                <p class="text-trading-muted mb-6">
+                    El plan Enterprise requiere una consulta personalizada. Cuéntanos tus necesidades y te contactaremos en menos de 24 horas.
+                </p>
+                
+                <form onsubmit="submitContactForm(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Nombre</label>
+                        <input type="text" required class="w-full px-4 py-3 rounded-xl bg-trading-dark border border-trading-border focus:border-trading-accent focus:outline-none transition-colors" placeholder="Tu nombre">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Email</label>
+                        <input type="email" required class="w-full px-4 py-3 rounded-xl bg-trading-dark border border-trading-border focus:border-trading-accent focus:outline-none transition-colors" placeholder="tu@email.com">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Mensaje</label>
+                        <textarea rows="4" required class="w-full px-4 py-3 rounded-xl bg-trading-dark border border-trading-border focus:border-trading-accent focus:outline-none transition-colors resize-none" placeholder="¿Cuántas cuentas necesitas? ¿Tienes requerimientos especiales?"></textarea>
+                    </div>
+                    <button type="submit" class="w-full btn-primary py-3 rounded-xl text-black font-semibold">
+                        Enviar Mensaje
+                    </button>
+                </form>
+
+                <div class="mt-6 pt-6 border-t border-trading-border/30 text-center">
+                    <p class="text-sm text-trading-muted mb-3">¿Prefieres hablar directamente?</p>
+                    <a href="https://wa.me/1234567890" target="_blank" class="inline-flex items-center gap-2 text-trading-success hover:underline">
+                        <i data-lucide="message-circle" class="w-5 h-5"></i>
+                        WhatsApp Directo
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Inicializar iconos
+        lucide.createIcons();
+
+        // Generar partículas
+        const particlesContainer = document.getElementById('particles');
+        for (let i = 0; i < 50; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 10 + 's';
+            particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
+            particlesContainer.appendChild(particle);
+        }
+
+        // FAQ Toggle
+        document.querySelectorAll('.faq-toggle').forEach(button => {
+            button.addEventListener('click', () => {
+                const answer = button.nextElementSibling;
+                const icon = button.querySelector('[data-lucide="chevron-down"]');
+                
+                answer.classList.toggle('hidden');
+                icon.style.transform = answer.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
+            });
+        });
+
+        // Animación de números
+        function animateValue(id, start, end, duration, suffix = '') {
+            const obj = document.getElementById(id);
+            const range = end - start;
+            const minTimer = 50;
+            let stepTime = Math.abs(Math.floor(duration / range));
+            stepTime = Math.max(stepTime, minTimer);
+            
+            let startTime = new Date().getTime();
+            let endTime = startTime + duration;
+            let timer;
+            
+            function run() {
+                let now = new Date().getTime();
+                let remaining = Math.max((endTime - now) / duration, 0);
+                let value = Math.round(end - (remaining * range));
+                obj.innerHTML = (value > 0 ? '+' : '') + value + suffix;
+                if (value == end) {
+                    clearInterval(timer);
+                }
+            }
+            
+            timer = setInterval(run, stepTime);
+            run();
+        }
+
+        // Animar estadísticas al cargar
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                animateValue('stat-returns', 0, 847, 2000, '%');
+                animateValue('stat-winrate', 0, 73, 2000, '%');
+            }, 500);
+        });
+
+        // Smooth scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // ==================== MODAL FUNCTIONS ====================
+
+        // DEMO MODAL
+        function openDemoModal() {
+            document.getElementById('demoModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+            
+            const youtubeVideoId = '';
+            
+            if (youtubeVideoId) {
+                document.getElementById('videoContainer').style.display = 'block';
+                document.getElementById('demoPlaceholder').style.display = 'none';
+                document.getElementById('demoVideo').src = `https://www.youtube.com/embed/${youtubeVideoId}?autoplay=1`;
+            }
+        }
+
+        function closeDemoModal() {
+            document.getElementById('demoModal').classList.remove('active');
+            document.body.style.overflow = '';
+            document.getElementById('demoVideo').src = '';
+        }
+
+        function requestDemoAccess() {
+            const message = encodeURIComponent('Hola, vi su landing page y quiero agendar una demo personalizada de Adberry Pro. ¿Cuándo tienen disponibilidad?');
+            window.open(`https://wa.me/1234567890?text=${message}`, '_blank');
+        }
+
+        // CHANGELOG MODAL - NUEVO
+        function openChangelogModal() {
+            document.getElementById('changelogModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+            lucide.createIcons();
+        }
+
+        function closeChangelogModal() {
+            document.getElementById('changelogModal').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // PAYMENT METHODS MODAL - NUEVO
+        function openPaymentMethodsModal() {
+            document.getElementById('paymentMethodsModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+            lucide.createIcons();
+        }
+
+        function closePaymentMethodsModal() {
+            document.getElementById('paymentMethodsModal').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // LEGAL MODALS
+        const legalContent = {
+            terms: {
+                title: 'Términos de Uso',
+                content: `
+                    <div class="space-y-4 text-sm text-trading-muted">
+                        <h4 class="text-white font-semibold text-lg">1. Aceptación de Términos</h4>
+                        <p>Al adquirir y utilizar Adberry Pro, usted acepta estos términos y condiciones en su totalidad. Si no está de acuerdo, no debe utilizar el software.</p>
+                        
+                        <h4 class="text-white font-semibold text-lg">2. Licencia de Uso</h4>
+                        <p>Se otorga una licencia no exclusiva y no transferible para usar el software en la(s) cuenta(s) especificadas según el plan adquirido. Queda estrictamente prohibida la redistribución, venta o alquiler del software.</p>
+                        
+                        <h4 class="text-white font-semibold text-lg">3. Limitación de Responsabilidad</h4>
+                        <p>El trading conlleva riesgos significativos, incluyendo la posible pérdida del capital invertido. Adberry Trading Systems no garantiza beneficios específicos y no se hace responsable de pérdidas derivadas del uso del software.</p>
+                        
+                        <h4 class="text-white font-semibold text-lg">4. Soporte Técnico</h4>
+                        <p>El soporte se proporciona según el plan adquirido: email (48h) para Starter, WhatsApp 24/7 para Pro y Enterprise. El soporte incluye instalación, configuración y resolución de errores técnicos.</p>
+                        
+                        <h4 class="text-white font-semibold text-lg">5. Actualizaciones</h4>
+                        <p>Las actualizaciones son gratuitas durante el período de licencia activa. Las actualizaciones mayores (versiones x.0) pueden requerir pago adicional según discreción del desarrollador.</p>
+                        
+                        <h4 class="text-white font-semibold text-lg">6. Terminación</h4>
+                        <p>La licencia puede ser terminada por incumplimiento de estos términos, intento de descompilación, o distribución no autorizada del software.</p>
+                    </div>
+                `
+            },
+            privacy: {
+                title: 'Política de Privacidad',
+                content: `
+                    <div class="space-y-4 text-sm text-trading-muted">
+                        <h4 class="text-white font-semibold text-lg">1. Información Recopilada</h4>
+                        <p>Recopilamos únicamente: nombre, email, número de cuenta MT5 (para activación), y datos de pago procesados por terceros seguros (PayPal, Stripe). No almacenamos información de tarjetas de crédito.</p>
+                        
+                        <h4 class="text-white font-semibold text-lg">2. Uso de la Información</h4>
+                        <p>La información se utiliza exclusivamente para: activación del producto, soporte técnico, envío de actualizaciones importantes, y comunicaciones sobre el servicio.</p>
+                        
+                        <h4 class="text-white font-semibold text-lg">3. Protección de Datos</h4>
+                        <p>Implementamos encriptación AES-256 para datos sensibles. Los números de cuenta MT5 se almacenan hasheados y nunca se comparten con terceros.</p>
+                        
+                        <h4 class="text-white font-semibold text-lg">4. Cookies y Tracking</h4>
+                        <p>Utilizamos cookies esenciales para el funcionamiento del sitio y Google Analytics para mejorar la experiencia. Puede desactivar cookies en su navegador, aunque algunas funciones pueden no estar disponibles.</p>
+                        
+                        <h4 class="text-white font-semibold text-lg">5. Derechos del Usuario</h4>
+                        <p>Usted tiene derecho a: acceder, rectificar, eliminar o exportar sus datos personales. Para ejercer estos derechos, contacte a: privacidad@adberry.com</p>
+                        
+                        <h4 class="text-white font-semibold text-lg">6. Retención</h4>
+                        <p>Los datos se retienen mientras la licencia esté activa o según lo requiera la ley ( típicamente 5 años para obligaciones fiscales).</p>
+                    </div>
+                `
+            },
+            risk: {
+                title: 'Aviso de Riesgo',
+                content: `
+                    <div class="space-y-4 text-sm text-trading-muted">
+                        <div class="p-4 bg-trading-danger/10 border border-trading-danger/30 rounded-xl mb-6">
+                            <p class="text-trading-danger font-semibold flex items-center gap-2">
+                                <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                                ADVERTENCIA IMPORTANTE
+                            </p>
+                        </div>
+                        
+                        <h4 class="text-white font-semibold text-lg">Riesgo de Pérdida</h4>
+                        <p>El trading en Forex, CFDs y otros instrumentos financieros conlleva un alto nivel de riesgo y puede no ser adecuado para todos los inversores. Existe la posibilidad de perder todo el capital invertido.</p>
+                        
+                        <h4 class="text-white font-semibold text-lg">Rendimientos Pasados</h4>
+                        <p>Los resultados históricos mostrados no garantizan resultados futuros. El mercado cambia constantemente y estrategias que funcionaron en el pasado pueden dejar de ser rentables.</p>
+                        
+                        <h4 class="text-white font-semibold text-lg">Apalancamiento</h4>
+                        <p>El uso de apalancamiento amplifica tanto ganancias como pérdidas. Un pequeño movimiento en contra puede resultar en pérdidas significativas o superiores al depósito inicial.</p>
+                        
+                        <h4 class="text-white font-semibold text-lg">Asesoramiento Profesional</h4>
+                        <p>Adberry Pro es una herramienta técnica, no asesor financiero. Se recomienda consultar con un asesor financiero independiente antes de invertir.</p>
+                        
+                        <h4 class="text-white font-semibold text-lg">Conocimiento Requerido</h4>
+                        <p>El usuario debe comprender los fundamentos del trading, gestión de riesgo y funcionamiento de MT5 antes de utilizar software automatizado.</p>
+                        
+                        <p class="text-xs mt-6 pt-4 border-t border-trading-border/30">Al utilizar este software, usted reconoce haber leído, entendido y aceptado estos riesgos.</p>
+                    </div>
+                `
+            },
+            refund: {
+                title: 'Política de Reembolso',
+                content: `
+                    <div class="space-y-4 text-sm text-trading-muted">
+                        <h4 class="text-white font-semibold text-lg">Garantía de 15 Días</h4>
+                        <p>Ofrecemos garantía de satisfacción de 15 días desde la fecha de compra. Si el software no cumple con las especificaciones descritas o no genera resultados positivos, puede solicitar reembolso total.</p>
+                        
+                        <h4 class="text-white font-semibold text-lg">Condiciones para Reembolso</h4>
+                        <ul class="list-disc pl-5 space-y-2">
+                            <li>Solicitud dentro de los 15 días calendario</li>
+                            <li>La licencia no ha sido revendida o transferida</li>
+                            <li>No se ha intentado descompilar o modificar el software</li>
+                            <li>Se proporciona feedback constructivo sobre el motivo (opcional pero apreciado)</li>
+                        </ul>
+                        
+                        <h4 class="text-white font-semibold text-lg">Proceso de Reembolso</h4>
+                        <p>1. Contactar a soporte@adberry.com o WhatsApp con asunto "Solicitud de Reembolso"<br>
+                        2. Proporcionar número de orden y motivo<br>
+                        3. El reembolso se procesa en 3-5 días hábiles al método de pago original<br>
+                        4. La licencia se desactiva inmediatamente</p>
+                        
+                        <h4 class="text-white font-semibold text-lg">No Aplica Reembolso</h4>
+                        <ul class="list-disc pl-5 space-y-2">
+                            <li>Solicitudes después de 15 días</li>
+                            <li>Pérdidas por decisiones de trading del usuario</li>
+                            <li>Problemas causados por configuración incorrecta del broker</li>
+                            <li>Cambio de opinión sin probar el software</li>
+                        </ul>
+                        
+                        <div class="p-4 bg-trading-success/10 border border-trading-success/30 rounded-xl mt-6">
+                            <p class="text-trading-success font-medium">Nuestro compromiso: Si no funciona para ti, no pagas. Sin preguntas complicadas.</p>
+                        </div>
+                    </div>
+                `
+            }
+        };
+
+        function openLegalModal(type) {
+            const modal = document.getElementById('legalModal');
+            const title = document.getElementById('legalTitle');
+            const content = document.getElementById('legalContent');
+            
+            title.textContent = legalContent[type].title;
+            content.innerHTML = legalContent[type].content;
+            
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            lucide.createIcons();
+        }
+
+        function closeLegalModal() {
+            document.getElementById('legalModal').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // PAYMENT MODAL
+        let selectedPlan = '';
+
+        function openPaymentModal(plan) {
+            selectedPlan = plan;
+            const modal = document.getElementById('paymentModal');
+            const details = document.getElementById('paymentPlanDetails');
+            
+            const plans = {
+                starter: { name: 'Plan Starter', price: '$199', features: '1 Cuenta • 3 Meses' },
+                pro: { name: 'Plan Pro', price: '$399', features: '2 Cuentas • 12 Meses' }
+            };
+            
+            const p = plans[plan];
+            details.innerHTML = `
+                <div class="flex justify-between items-center">
+                    <div>
+                        <div class="font-semibold text-lg">${p.name}</div>
+                        <div class="text-sm text-trading-muted">${p.features}</div>
+                    </div>
+                    <div class="text-2xl font-bold text-trading-accent">${p.price}</div>
+                </div>
+            `;
+            
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closePaymentModal() {
+            document.getElementById('paymentModal').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function processPayment(method) {
+            const messages = {
+                paypal: 'Hola, quiero comprar el plan ' + selectedPlan.toUpperCase() + ' de Adberry Pro. Mi método de pago preferido es PayPal.',
+                crypto: 'Hola, quiero comprar el plan ' + selectedPlan.toUpperCase() + ' de Adberry Pro. Prefiero pagar con criptomonedas (BTC/USDT).',
+                transfer: 'Hola, quiero comprar el plan ' + selectedPlan.toUpperCase() + ' de Adberry Pro. Necesito los datos para transferencia bancaria.',
+                wise: 'Hola, quiero comprar el plan ' + selectedPlan.toUpperCase() + ' de Adberry Pro. Prefiero pagar vía Wise/TransferWise.'
+            };
+            
+            const encodedMsg = encodeURIComponent(messages[method]);
+            window.open(`https://wa.me/1234567890?text=${encodedMsg}`, '_blank');
+            closePaymentModal();
+        }
+
+        // CONTACT MODAL
+        function openContactModal(plan) {
+            document.getElementById('contactModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeContactModal() {
+            document.getElementById('contactModal').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function submitContactForm(e) {
+            e.preventDefault();
+            alert('¡Mensaje enviado! Te contactaremos en menos de 24 horas.');
+            closeContactModal();
+        }
+
+        // FEATURE MODAL
+        function openFeatureModal(feature) {
+            const messages = {
+                ia: 'Hola, quiero saber más sobre el algoritmo IA Predictiva de Adberry Pro.',
+                protection: 'Hola, quiero entender mejor cómo funciona la Protección de Capital en Adberry Pro.',
+                news: 'Hola, quiero más información sobre el Filtro de Noticias de Adberry Pro.',
+                volatility: 'Hola, quiero saber cómo funciona el sistema Anti-Volatilidad de Adberry Pro.',
+                target: 'Hola, quiero entender mejor la función de Meta Diaria de Adberry Pro.',
+                license: 'Hola, quiero información sobre las licencias de Adberry Pro.'
+            };
+            
+            const encodedMsg = encodeURIComponent(messages[feature]);
+            window.open(`https://wa.me/1234567890?text=${encodedMsg}`, '_blank');
+        }
+
+        // OTHER MODALS
+        function openDocsModal() {
+            window.open('https://docs.adberry.com', '_blank') || alert('Documentación disponible próximamente. Contacta por WhatsApp para recibir el manual PDF.');
+        }
+
+        function openTutorialsModal() {
+            window.open('https://youtube.com/@adberrypro', '_blank') || alert('Canal de YouTube en preparación. Solicita videos tutoriales por WhatsApp.');
+        }
+
+        // Close modals on outside click
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.classList.remove('active');
+                document.body.style.overflow = '';
+                if (event.target.id === 'demoModal') {
+                    document.getElementById('demoVideo').src = '';
+                }
+            }
+        }
+
+        // Escape key to close modals
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal.active').forEach(modal => {
+                    modal.classList.remove('active');
+                });
+                document.body.style.overflow = '';
+                document.getElementById('demoVideo').src = '';
+            }
+        });
+    </script>
+</body>
+</html>
